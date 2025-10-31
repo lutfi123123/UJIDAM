@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Scan QR Ujian</title>
+  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <style>
+    body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
+    h2 { margin-bottom: 10px; }
+    #reader { width: 320px; margin: 0 auto; }
+    #status { margin-top: 15px; font-weight: bold; }
+  </style>
+</head>
+<body>
+  <h2>Scan QR Code Ujian</h2>
+  <p>Arahkan kamera ke QR Code yang diberikan guru.</p>
+  <div id="reader"></div>
+  <div id="status"></div>
+
+  <script>
+    const scriptURL = "https://script.google.com/macros/s/AKfycbxfSFEGc6o8OGiG7T1DAm0oKE1WKe6VIy-Nnl4j23EZfmoXkOBASTjhn8eDji7PNKcN/exec"; // ganti URL kamu
+    const statusDiv = document.getElementById("status");
+
+    async function cekToken(token) {
+      statusDiv.textContent = "Memeriksa token...";
+      try {
+        const res = await fetch(scriptURL + "?token=" + encodeURIComponent(token));
+        const data = await res.json();
+
+        if (data.success) {
+          statusDiv.textContent = "Token valid! Mengarahkan ke Google Form...";
+          window.location.href = data.link;
+        } else {
+          statusDiv.textContent = "Token salah atau tidak ditemukan.";
+        }
+      } catch (err) {
+        statusDiv.textContent = "Terjadi kesalahan koneksi.";
+      }
+    }
+
+    function onScanSuccess(decodedText) {
+      if (decodedText) {
+        html5QrcodeScanner.clear();
+        cekToken(decodedText);
+      }
+    }
+
+    const html5QrcodeScanner = new Html5QrcodeScanner(
+      "reader",
+      { fps: 10, qrbox: { width: 250, height: 250 } },
+      false
+    );
+    html5QrcodeScanner.render(onScanSuccess);
+  </script>
+</body>
+</html>
