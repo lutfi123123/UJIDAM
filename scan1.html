@@ -7,9 +7,9 @@
   <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
-  <h2>Scan QR Token</h2>
+  <h2>Scan QR Token Ujian</h2>
   <button id="startScan">Mulai Scan QR</button>
-  <div id="reader" style="width:300px; margin-top: 10px;"></div>
+  <div id="reader" style="width: 320px; margin: 20px auto;"></div>
 
   <script>
     const startBtn = document.getElementById("startScan");
@@ -21,19 +21,21 @@
 
     startBtn.addEventListener("click", async () => {
       startBtn.disabled = true;
-      startBtn.innerText = "Memulai kamera...";
+      startBtn.innerText = "Mengaktifkan kamera...";
       
       try {
         const cameras = await Html5Qrcode.getCameras();
         if (cameras && cameras.length) {
-          const cameraId = cameras[0].id; // gunakan kamera pertama
+          // Pilih kamera belakang (biasanya indeks terakhir)
+          const backCamera = cameras[cameras.length - 1].id;
+          
           scanner.start(
-            cameraId,
+            backCamera,
             { fps: 10, qrbox: 250 },
             onScanSuccess,
             (errorMessage) => {}
           );
-          startBtn.style.display = "none"; // sembunyikan tombol setelah mulai
+          startBtn.style.display = "none";
         } else {
           alert("Kamera tidak ditemukan!");
           startBtn.disabled = false;
@@ -55,6 +57,7 @@
         .then(data => {
           if (data.success) {
             alert("Token valid! Mengarahkan ke ujian...");
+            scanner.stop();
             window.location.href = data.link;
           } else {
             alert("Token salah atau tidak ditemukan!");
