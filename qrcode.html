@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Buat QR Token Ujian</title>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs/qrcode.min.js"></script>
+</head>
+<body>
+  <h3>Generator QR Token Ujian</h3>
+  <input type="text" id="token" placeholder="Masukkan Token">
+  <button onclick="generateQR()">Buat QR</button>
+  <div id="qrcode"></div>
+
+  <script>
+    const baseURL = "https://script.google.com/macros/s/AKfycbxfSFEGc6o8OGiG7T1DAm0oKE1WKe6VIy-Nnl4j23EZfmoXkOBASTjhn8eDji7PNKcN/exec";
+
+    function generateQR() {
+      const token = document.getElementById('token').value.trim();
+      if (!token) {
+        alert("Masukkan token terlebih dahulu");
+        return;
+      }
+      const fullURL = `${baseURL}?token=${encodeURIComponent(token)}`;
+      document.getElementById("qrcode").innerHTML = "";
+      new QRCode(document.getElementById("qrcode"), fullURL);
+    }
+  </script>
+</body>
+</html>
