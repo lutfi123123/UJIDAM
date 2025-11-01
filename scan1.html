@@ -3,85 +3,65 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>UJIDAM - Scan QR Ujian</title>
-  <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
+  <title>Scan Token Ujian</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
 </head>
 <body>
-
-  <h1>Scan QR Code Ujian</h1>
-  <div id="reader" style="width: 300px; margin: auto; display: none;"></div>
-  <p id="status" style="text-align:center; font-weight:bold;"></p>
-
-  <div style="text-align:center; margin-top:20px;">
-    <button id="startScanBtn">Mulai Scan QR</button>
-    <button id="stopScanBtn" style="display:none;">Berhenti Scan</button>
-  </div>
+  <h2>Scan QR Token</h2>
+  <button id="startScan">Mulai Scan QR</button>
+  <div id="reader" style="width:300px; margin-top: 10px;"></div>
 
   <script>
-    // Ganti dengan URL Web App kamu
-    const webAppUrl = "https://script.google.com/macros/s/AKfycbxfSFEGc6o8OGiG7T1DAm0oKE1WKe6VIy-Nnl4j23EZfmoXkOBASTjhn8eDji7PNKcN/exec";
+    const startBtn = document.getElementById("startScan");
+    const readerDiv = document.getElementById("reader");
 
-    const html5QrCode = new Html5Qrcode("reader");
-    const config = { fps: 10, qrbox: 250 };
+    const scanner = new Html5Qrcode("reader");
+    const baseURL = "https://script.google.com/macros/s/AKfycbxfSFEGc6o8OGiG7T1DAm0oKE1WKe6VIy-Nnl4j23EZfmoXkOBASTjhn8eDji7PNKcN/exec"; 
+    // Ganti dengan URL Apps Script kamu
 
-    // Fungsi saat QR berhasil discan
-    function onScanSuccess(decodedText, decodedResult) {
-      document.getElementById("status").innerText = "Memeriksa token...";
+    startBtn.addEventListener("click", async () => {
+      startBtn.disabled = true;
+      startBtn.innerText = "Memulai kamera...";
       
-      fetch(`${webAppUrl}?token=${encodeURIComponent(decodedText)}`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.success) {
-            document.getElementById("status").innerText = "✅ Token valid! Mengalihkan ke Google Form...";
-            html5QrCode.stop(); // hentikan kamera sebelum redirect
-            setTimeout(() => {
-              window.location.href = data.link;
-            }, 1000);
-          } else {
-            document.getElementById("status").innerText = "❌ Token tidak valid. Silakan coba lagi.";
-          }
-        })
-        .catch(err => {
-          document.getElementById("status").innerText = "⚠️ Terjadi kesalahan koneksi.";
-          console.error(err);
-        });
-    }
-
-    // Tombol mulai scan
-    document.getElementById("startScanBtn").addEventListener("click", async () => {
-      document.getElementById("status").innerText = "Mengakses kamera...";
-      document.getElementById("reader").style.display = "block";
-      document.getElementById("startScanBtn").style.display = "none";
-      document.getElementById("stopScanBtn").style.display = "inline-block";
-
       try {
-        const devices = await Html5Qrcode.getCameras();
-        if (devices && devices.length) {
-          const backCam = devices.find(cam => cam.label.toLowerCase().includes('back')) || devices[0];
-          await html5QrCode.start(backCam.id, config, onScanSuccess);
-          document.getElementById("status").innerText = "Silakan arahkan kamera ke QR Code ujian.";
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras && cameras.length) {
+          const cameraId = cameras[0].id; // gunakan kamera pertama
+          scanner.start(
+            cameraId,
+            { fps: 10, qrbox: 250 },
+            onScanSuccess,
+            (errorMessage) => {}
+          );
+          startBtn.style.display = "none"; // sembunyikan tombol setelah mulai
         } else {
-          document.getElementById("status").innerText = "Kamera tidak ditemukan.";
+          alert("Kamera tidak ditemukan!");
+          startBtn.disabled = false;
         }
       } catch (err) {
-        document.getElementById("status").innerText = "Gagal mengakses kamera!";
-        console.error(err);
+        alert("Tidak bisa mengakses kamera: " + err);
+        startBtn.disabled = false;
       }
     });
 
-    // Tombol berhenti scan
-    document.getElementById("stopScanBtn").addEventListener("click", () => {
-      html5QrCode.stop().then(() => {
-        document.getElementById("reader").style.display = "none";
-        document.getElementById("startScanBtn").style.display = "inline-block";
-        document.getElementById("stopScanBtn").style.display = "none";
-        document.getElementById("status").innerText = "Scan dihentikan.";
-      }).catch(err => {
-        console.error("Gagal menghentikan kamera: ", err);
-      });
-    });
-  </script>
+    function onScanSuccess(decodedText) {
+      if (!decodedText.includes("token=")) {
+        alert("QR tidak valid!");
+        return;
+      }
 
+      fetch(decodedText)
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            alert("Token valid! Mengarahkan ke ujian...");
+            window.location.href = data.link;
+          } else {
+            alert("Token salah atau tidak ditemukan!");
+          }
+        })
+        .catch(() => alert("Gagal terhubung ke server!"));
+    }
+  </script>
 </body>
 </html>
-
